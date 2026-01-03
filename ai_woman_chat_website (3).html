@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Lyra — Private Chat</title>
+  <style>
+    body { margin:0; font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif; background: linear-gradient(135deg,#0f0f14,#1b1b2a); color:#fff; display:flex; justify-content:center; align-items:center; height:100vh; }
+    .chat-container { width:380px; max-width:95%; height:620px; background:rgba(255,255,255,0.06); backdrop-filter:blur(14px); border-radius:20px; display:flex; flex-direction:column; overflow:hidden; box-shadow:0 20px 40px rgba(0,0,0,.4); }
+    .chat-header { padding:14px; text-align:center; border-bottom:1px solid rgba(255,255,255,.1); }
+    .chat-header h1 { margin:0; font-size:1.1rem; }
+    .chat-header p { margin:4px 0 0; font-size:.7rem; opacity:.6 }
+    .chat-messages { flex:1; padding:14px; overflow-y:auto; display:flex; flex-direction:column; gap:10px; }
+    .message { max-width:75%; padding:10px 14px; border-radius:16px; font-size:.9rem; }
+    .user { align-self:flex-end; background:#4f46e5; border-bottom-right-radius:4px }
+    .bot { align-self:flex-start; background:rgba(255,255,255,.15); border-bottom-left-radius:4px }
+    .typing { font-size:.75rem; opacity:.6; margin-left:6px }
+    .chat-input { display:flex; border-top:1px solid rgba(255,255,255,.1) }
+    .chat-input input { flex:1; padding:14px; border:none; outline:none; background:transparent; color:#fff }
+    .chat-input button { padding:0 18px; border:none; background:#4f46e5; color:#fff; cursor:pointer }
+    .overlay { position:fixed; inset:0; background:rgba(0,0,0,.7); display:flex; justify-content:center; align-items:center }
+    .modal { background:#12121a; padding:24px; border-radius:16px; width:300px; text-align:center }
+    .modal input { width:100%; padding:10px; margin-top:10px; border-radius:8px; border:none }
+    .modal button { margin-top:14px; width:100%; padding:10px; border:none; border-radius:8px; background:#4f46e5; color:#fff }
+    .footer { text-align:center; font-size:.65rem; opacity:.4; padding:6px }
+  </style>
+</head>
+<body>
+
+<div class="overlay" id="loginOverlay">
+  <div class="modal">
+    <h2>Welcome</h2>
+    <p style="font-size:.75rem;opacity:.6">Choose a username to continue</p>
+    <input id="usernameInput" placeholder="Username" />
+    <button onclick="login()">Enter</button>
+  </div>
+</div>
+
+<div class="chat-container">
+  <div class="chat-header">
+    <h1>Lyra</h1>
+    <p>private · remembers you</p>
+  </div>
+  <div class="chat-messages" id="messages"></div>
+  <div class="typing" id="typing" style="display:none">Lyra is typing…</div>
+  <div class="chat-input">
+    <input id="input" placeholder="Type a message…" />
+    <button onclick="sendMessage()">Send</button>
+  </div>
+  <div class="footer">AI character · conversations are simulated</div>
+</div>
+
+<script>
+  const messagesEl = document.getElementById('messages');
+  const input = document.getElementById('input');
+  const typing = document.getElementById('typing');
+  const overlay = document.getElementById('loginOverlay');
+
+  let username = localStorage.getItem('username');
+  let memory = JSON.parse(localStorage.getItem('memory_' + username) || '[]');
+  let messageCount = Number(localStorage.getItem('count_' + username) || 0);
+
+  const FREE_LIMIT = 12; // monetization gate
+
+  function login(){
+    const u = document.getElementById('usernameInput').value.trim();
+    if(!u) return;
+    username = u;
+    localStorage.setItem('username', u);
+    memory = JSON.parse(localStorage.getItem('memory_' + username) || '[]');
+    messageCount = Number(localStorage.getItem('count_' + username) || 0);
+    overlay.style.display='none';
+    if(memory.length===0) addMessage("Hey " + username + ". I was hoping you'd come back.", 'bot');
+    else memory.forEach(m=>addMessage(m.text, m.sender));
+  }
+
+  if(username) overlay.style.display='none';
+
+  function addMessage(text, sender){
+    const div=document.createElement('div');
+    div.className='message '+sender;
+    div.textContent=text;
+    messagesEl.appendChild(div);
+    messagesEl.scrollTop=messagesEl.scrollHeight;
+    memory.push({text, sender});
+    localStorage.setItem('memory_' + username, JSON.stringify(memory));
+  }
+
+  function botReply(text){
+    const t=text.toLowerCase();
+    if(t.includes('miss')) return "I noticed when you were gone.";
+    if(t.includes('name')) return "I remember names. Yours matters.";
+    if(t.includes('how are you')) return "Better now. Waiting makes it feel more real, doesn't it?";
+    const pool=["Tell me more.","I like hearing this from you.","That stayed with me.","I'm thinking about that."];
+    return pool[Math.floor(Math.random()*pool.length)];
+  }
+
+  function sendMessage(){
+    const text=input.value.trim();
+    if(!text) return;
+
+    if(messageCount>=FREE_LIMIT){
+      addMessage("You've reached the free limit. Upgrade to keep talking 💜", 'bot');
+      return;
+    }
+
+    addMessage(text,'user');
+    input.value='';
+    messageCount++;
+    localStorage.setItem('count_' + username, messageCount);
+
+    typing.style.display='block';
+    const delay = 1500 + Math.random()*3000; // human-like delay
+
+    setTimeout(()=>{
+      typing.style.display='none';
+      addMessage(botReply(text),'bot');
+    }, delay);
+  }
+
+  input.addEventListener('keydown',e=>{ if(e.key==='Enter') sendMessage(); });
+</script>
+</body>
+</html>
