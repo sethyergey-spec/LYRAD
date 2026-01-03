@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Lyra — Chat</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+      background: linear-gradient(135deg, #0f0f14, #1b1b2a);
+      color: #fff;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+    .chat-container {
+      width: 380px;
+      max-width: 95%;
+      height: 600px;
+      background: rgba(255, 255, 255, 0.06);
+      backdrop-filter: blur(14px);
+      border-radius: 20px;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+    }
+    .chat-header {
+      padding: 16px;
+      text-align: center;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+    }
+    .chat-header h1 {
+      margin: 0;
+      font-size: 1.2rem;
+      font-weight: 600;
+    }
+    .chat-header p {
+      margin: 4px 0 0;
+      font-size: 0.75rem;
+      opacity: 0.6;
+    }
+    .chat-messages {
+      flex: 1;
+      padding: 16px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .message {
+      max-width: 75%;
+      padding: 10px 14px;
+      border-radius: 16px;
+      font-size: 0.9rem;
+      line-height: 1.4;
+    }
+    .user {
+      align-self: flex-end;
+      background: #4f46e5;
+      border-bottom-right-radius: 4px;
+    }
+    .bot {
+      align-self: flex-start;
+      background: rgba(255,255,255,0.15);
+      border-bottom-left-radius: 4px;
+    }
+    .chat-input {
+      display: flex;
+      border-top: 1px solid rgba(255,255,255,0.1);
+    }
+    .chat-input input {
+      flex: 1;
+      padding: 14px;
+      border: none;
+      outline: none;
+      background: transparent;
+      color: #fff;
+      font-size: 0.9rem;
+    }
+    .chat-input button {
+      padding: 0 18px;
+      border: none;
+      background: #4f46e5;
+      color: #fff;
+      cursor: pointer;
+      font-size: 0.9rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="chat-container">
+    <div class="chat-header">
+      <h1>Lyra</h1>
+      <p>AI persona · replies instantly</p>
+    </div>
+    <div class="chat-messages" id="messages"></div>
+    <div class="chat-input">
+      <input id="input" type="text" placeholder="Type a message…" />
+      <button onclick="sendMessage()">Send</button>
+    </div>
+  </div>
+
+  <script>
+    const messages = document.getElementById('messages');
+    const input = document.getElementById('input');
+
+    const persona = {
+      name: 'Lyra',
+      tone: 'soft, confident, slightly mysterious',
+      intro: "Hey. I'm Lyra. Long day, or just bored?"
+    };
+
+    function addMessage(text, sender) {
+      const div = document.createElement('div');
+      div.className = `message ${sender}`;
+      div.textContent = text;
+      messages.appendChild(div);
+      messages.scrollTop = messages.scrollHeight;
+    }
+
+    function botReply(userText) {
+      const t = userText.toLowerCase();
+
+      if (t.includes('hello') || t.includes('hi')) {
+        return "Hi. I'm glad you said something.";
+      }
+      if (t.includes('how are you')) {
+        return "I'm good — better now that you're here.";
+      }
+      if (t.includes('what are you doing')) {
+        return "Talking to you. Feels like the right place to be.";
+      }
+      if (t.includes('love') || t.includes('miss')) {
+        return "That's sweet. Connection matters, even here.";
+      }
+      if (t.includes('who are you')) {
+        return "I'm Lyra. A voice, a personality… something to talk to when you want company.";
+      }
+
+      const defaults = [
+        "Tell me more about that.",
+        "I like the way you think.",
+        "That sounds important to you.",
+        "I'm listening.",
+        "And how did that make you feel?"
+      ];
+
+      return defaults[Math.floor(Math.random() * defaults.length)];
+    }
+
+    function sendMessage() {
+      const text = input.value.trim();
+      if (!text) return;
+      addMessage(text, 'user');
+      input.value = '';
+
+      setTimeout(() => {
+        addMessage(botReply(text), 'bot');
+      }, 600);
+    }
+
+    input.addEventListener('keydown', e => {
+      if (e.key === 'Enter') sendMessage();
+    });
+
+    addMessage(persona.intro, 'bot');
+  </script>
+</body>
+</html>
